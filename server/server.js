@@ -2,28 +2,20 @@ require('./config/config');
 
 const express = require('express');
 const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
+const usuarioRoutes = require('./routes/usuario');
+
 
 const app = express();
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
+app.use('/usuario', usuarioRoutes);
 
-app.get('/usuario', (req, res) => {
-    res.json('get usuario');
-});
-
-app.post('/usuario', (req, res) => {
-    res.json('post usuario');
-});
-
-app.put('/usuario/:id', (req, res) => {
-    let id = req.params.id;
-    res.json(`put usuario id: ${id}`);
-});
-
-app.delete('/usuario', (req, res) => {
-    res.json('delete usuario');
+mongoose.connect(process.env.URLDB, (err, res) => {
+    if (err) throw err;
+    console.log(`MongoDB Online`);
 });
 
 app.listen(process.env.PORT, () => {
