@@ -15,9 +15,9 @@ let urlDB;
 
 if (process.env.NODE_ENV === 'dev') {
     // deberia ser local, pero no lo quiero instalar
-    urlDB = process.env.mongodb: //root:toor@ds217310.mlab.com:17310/cafe;
+    urlDB = process.env.MONGO_URI;
 } else {
-    urlDB = process.env.mongodb: //root:toor@ds217310.mlab.com:17310/cafe;
+    urlDB = process.env.MONGO_URI;
 }
 
 process.env.URLDB = urlDB;
