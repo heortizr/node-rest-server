@@ -3,15 +3,15 @@ require('./config/config');
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
-const usuarioRoutes = require('./routes/usuario');
-
 
 const app = express();
 
+// parser de body
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-app.use('/usuario', usuarioRoutes);
+// cargo las rutas
+require('./routes/index');
 
 mongoose.connect(process.env.URLDB, (err, res) => {
     if (err) throw err;
