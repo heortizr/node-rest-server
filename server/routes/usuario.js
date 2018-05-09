@@ -3,11 +3,9 @@ const express = require('express');
 const _ = require('underscore');
 
 const Usuario = require('../models/usuario');
-const { verificaToken } = require('../middlewares/auth');
+const { verificaToken, verificaAdminRole } = require('../middlewares/auth');
 
 const app = express();
-
-
 
 app.get('/', verificaToken, (req, res) => {
 
@@ -40,7 +38,7 @@ app.get('/', verificaToken, (req, res) => {
 
 });
 
-app.post('/', verificaToken, (req, res) => {
+app.post('/', [verificaToken, verificaAdminRole], (req, res) => {
 
     let body = req.body;
 
@@ -67,7 +65,7 @@ app.post('/', verificaToken, (req, res) => {
 
 });
 
-app.put('/:id', verificaToken, (req, res) => {
+app.put('/:id', [verificaToken, verificaAdminRole], (req, res) => {
 
     let campos = ['name', 'email', 'img', 'role', 'estado'];
     let body = _.pick(req.body, campos);
@@ -88,7 +86,7 @@ app.put('/:id', verificaToken, (req, res) => {
     });
 });
 
-app.delete('/:id', verificaToken, (req, res) => {
+app.delete('/:id', [verificaToken, verificaAdminRole], (req, res) => {
 
     let id = req.params.id;
     let body = { estado: false };
