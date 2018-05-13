@@ -19,7 +19,7 @@ let verificaToken = (req, res, next) => {
         req.usuario = decode.payload;
         next();
     });
-}
+};
 
 // ======================
 // Verifica Admin Role
@@ -36,9 +36,31 @@ let verificaAdminRole = (req, res, next) => {
         });
     }
 
-}
+};
+
+// ======================
+// Verifica Admin Role
+// ======================
+let verificaTokenQuery = (req, res, next) => {
+
+    let token = req.query.token;
+
+    jwt.verify(token, process.env.SEED, (err, decode) => {
+
+        if (err) {
+            return res.status(401).json({
+                ok: false,
+                errs: err
+            });
+        }
+
+        req.usuario = decode.payload;
+        next();
+    });
+};
 
 module.exports = {
     verificaToken,
+    verificaTokenQuery,
     verificaAdminRole
-}
+};
