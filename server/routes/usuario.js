@@ -7,13 +7,10 @@ const { verificaToken, verificaAdminRole } = require('../middlewares/auth');
 
 const app = express();
 
-app.get('/', verificaToken, (req, res) => {
+app.get('/', [verificaToken], (req, res) => {
 
-    let desde = req.query.desde || 0;
-    let limite = req.query.limite || 5;
-
-    desde = Number(desde);
-    limite = Number(limite);
+    let desde = Number(req.query.desde || 0);
+    let limite = Number(req.query.limite || 5);
 
     Usuario.find({ estado: true }, 'nombre email img estado role google')
         .skip(desde)
@@ -67,7 +64,7 @@ app.post('/', [verificaToken, verificaAdminRole], (req, res) => {
 
 app.put('/:id', [verificaToken, verificaAdminRole], (req, res) => {
 
-    let campos = ['name', 'email', 'img', 'role', 'estado'];
+    let campos = ['nombre', 'email', 'password', 'img', 'role', 'estado'];
     let body = _.pick(req.body, campos);
     let id = req.params.id;
 

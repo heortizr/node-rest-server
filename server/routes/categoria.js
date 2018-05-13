@@ -8,6 +8,8 @@ const app = express();
 app.get('/', verificaToken, (req, res) => {
 
     Categoria.find({})
+        .sort('descripcion')
+        .populate('usuario', 'nombre email')
         .exec((err, categorias) => {
 
             if (err) {
@@ -82,7 +84,7 @@ app.post('/', [verificaToken], (req, res) => {
 
 });
 
-app.put('/:id', [verificaToken, verificaAdminRole], (req, res) => {
+app.put('/:id', verificaToken, verificaAdminRole, (req, res) => {
 
     let body = { descripcion: req.body.descripcion };
     let id = req.params.id;
@@ -102,7 +104,7 @@ app.put('/:id', [verificaToken, verificaAdminRole], (req, res) => {
     });
 });
 
-app.delete('/:id', [verificaToken, verificaAdminRole], (req, res) => {
+app.delete('/:id', verificaToken, verificaAdminRole, (req, res) => {
 
     let id = req.params.id;
 

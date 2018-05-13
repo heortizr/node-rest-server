@@ -2,6 +2,7 @@ require('./config/config');
 
 const express = require('express');
 const bodyParser = require('body-parser');
+const routes = require('./routes/index');
 const mongoose = require('mongoose');
 const path = require('path');
 
@@ -15,7 +16,7 @@ app.use(bodyParser.json());
 app.use(express.static(path.resolve(__dirname, '../public')));
 
 // cargo las rutas
-require('./routes/index');
+app.use(routes);
 
 mongoose.connect(process.env.URLDB, (err, res) => {
     if (err) throw err;

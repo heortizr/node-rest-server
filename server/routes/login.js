@@ -1,5 +1,5 @@
 const bcrypt = require('bcrypt');
-const jwt = require('json-web-token');
+const jwt = require('jsonwebtoken');
 const express = require('express');
 const { OAuth2Client } = require('google-auth-library');
 

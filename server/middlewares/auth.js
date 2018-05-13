@@ -1,4 +1,4 @@
-const jwt = require('json-web-token');
+const jwt = require('jsonwebtoken');
 
 // ======================
 // Verifica token
@@ -16,7 +16,7 @@ let verificaToken = (req, res, next) => {
             });
         }
 
-        req.usuario = decode.usuario
+        req.usuario = decode.payload;
         next();
     });
 }
@@ -26,7 +26,7 @@ let verificaToken = (req, res, next) => {
 // ======================
 let verificaAdminRole = (req, res, next) => {
 
-    let token = req.usuario;
+    let usuario = req.usuario;
     if (usuario.role === 'ADMIN_ROLE') {
         next();
     } else {
@@ -39,5 +39,6 @@ let verificaAdminRole = (req, res, next) => {
 }
 
 module.exports = {
-    verificaToken
+    verificaToken,
+    verificaAdminRole
 }
