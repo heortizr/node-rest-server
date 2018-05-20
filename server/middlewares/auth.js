@@ -1,11 +1,11 @@
 const jwt = require('jsonwebtoken');
 
 // ======================
-// Verifica token
+// Verify Token
 // ======================
-let verificaToken = (req, res, next) => {
+let verifyToken = (req, res, next) => {
 
-    let token = req.get('token');
+    let token = req.get('token') || req.query.token;
 
     jwt.verify(token, process.env.SEED, (err, decode) => {
 
@@ -16,51 +16,28 @@ let verificaToken = (req, res, next) => {
             });
         }
 
-        req.usuario = decode.payload;
+        req.user = decode.payload;
         next();
     });
 };
 
 // ======================
-// Verifica Admin Role
+// Verify Admin Role
 // ======================
-let verificaAdminRole = (req, res, next) => {
-
-    let usuario = req.usuario;
-    if (usuario.role === 'ADMIN_ROLE') {
+let verifyAdminRole = (req, res, next) => {
+    let { user } = req;
+    if (user.role === 'ADMIN_ROLE') {
         next();
     } else {
         return res.status(401).json({
             ok: false,
-            errs: { message: 'No es un administrador' }
+            errs: { message: 'You are not an Admin' }
         });
     }
 
 };
 
-// ======================
-// Verifica Admin Role
-// ======================
-let verificaTokenQuery = (req, res, next) => {
-
-    let token = req.query.token;
-
-    jwt.verify(token, process.env.SEED, (err, decode) => {
-
-        if (err) {
-            return res.status(401).json({
-                ok: false,
-                errs: err
-            });
-        }
-
-        req.usuario = decode.payload;
-        next();
-    });
-};
-
 module.exports = {
-    verificaToken,
-    verificaTokenQuery,
-    verificaAdminRole
+    verifyToken,
+    verifyAdminRole
 };

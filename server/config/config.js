@@ -21,8 +21,8 @@ process.env.SEED = process.env.SEED || 'asdf';
 // ===========================
 // Google
 // ===========================
-process.env.CLIENT_ID = process.env.CLIENT_ID || "684708854038-tp79ionfpk7kug1f3h2vejpjgu7bm30g.apps.googleusercontent.com";
-process.env.GOOGLE_SECRET = process.env.GOOGLE_SECRET || "2JkBUu3G9qe6JLHgUEOXQoaT";
+process.env.CLIENT_ID = process.env.CLIENT_ID || '684708854038-tp79ionfpk7kug1f3h2vejpjgu7bm30g.apps.googleusercontent.com';
+process.env.GOOGLE_SECRET = process.env.GOOGLE_SECRET || '2JkBUu3G9qe6JLHgUEOXQoaT';
 
 // ===========================
 // Data Base

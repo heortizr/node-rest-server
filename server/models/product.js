@@ -1,17 +1,16 @@
 var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
+var { Schema } = mongoose;
 
-
-var productoSchema = new Schema({
-    nombre: {
+var productSchema = new Schema({
+    name: {
         type: String,
-        required: [true, 'El nombre es necesario']
+        required: [true]
     },
-    precioUni: {
+    unitPrice: {
         type: Number,
-        required: [true, 'El precio únitario es necesario']
+        required: [true]
     },
-    descripcion: {
+    description: {
         type: String,
         required: false
     },
@@ -19,21 +18,21 @@ var productoSchema = new Schema({
         type: String,
         required: false
     },
-    disponible: {
+    available: {
         type: Boolean,
         required: true,
         default: true
     },
-    categoria: {
+    category: {
         type: Schema.Types.ObjectId,
-        ref: 'Categoria',
+        ref: 'Category',
         required: true
     },
-    usuario: {
+    user: {
         type: Schema.Types.ObjectId,
-        ref: 'Usuario'
+        ref: 'User'
     }
 });
 
 
-module.exports = mongoose.model('Producto', productoSchema);
+module.exports = mongoose.model('Product', productSchema);

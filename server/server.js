@@ -4,6 +4,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const routes = require('./routes/index');
 const mongoose = require('mongoose');
+const logger = require('winston');
 const path = require('path');
 
 const app = express();
@@ -18,11 +19,13 @@ app.use(express.static(path.resolve(__dirname, '../public')));
 // cargo las rutas
 app.use(routes);
 
-mongoose.connect(process.env.URLDB, (err, res) => {
+mongoose.connect(process.env.URLDB, (err) => {
     if (err) throw err;
-    console.log(`MongoDB Online`);
+    logger.info('MongoDB Online');
 });
 
 app.listen(process.env.PORT, () => {
-    console.log(`Example app listening on port ${process.env.PORT}!`);
+    logger.info(`Example app listening on port ${process.env.PORT}!`);
 });
+
+module.exports = app;

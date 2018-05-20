@@ -1,17 +1,16 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
-const { verificaToken } = require('../middlewares/auth');
+const { verifyToken } = require('../middlewares/auth');
 
 const app = express();
 
-app.get('/:tipo/:img', verificaToken, (req, res) => {
+app.get('/:type/:img', verifyToken, (req, res) => {
 
-    let tipo = req.params.tipo;
-    let img = req.params.img;
+    let { type, img } = req.params;
 
-    let pathImg = `../../uploads/${tipo}/${img}`;
-    let pathNoImg = `../assets/no-image.jpg`;
+    let pathImg = `../../uploads/${type}/${img}`;
+    let pathNoImg = '../assets/no-image.jpg';
 
     let url = path.resolve(__dirname + pathImg);
     let noImg = path.resolve(__dirname, pathNoImg);

@@ -6,7 +6,9 @@
     "scripts": {
         "dev": "nodemon server/server",
         "start": "node server/server",
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "test": "./node_modules/.bin/mocha --timeout 5000",
+        "lint": "./node_modules/.bin/eslint .",
+        "pretest": "npm run lint"
     },
     "keywords": [],
     "author": "",
@@ -20,6 +22,14 @@
         "jsonwebtoken": "^8.2.1",
         "mongoose": "^5.0.17",
         "mongoose-unique-validator": "^2.0.1",
-        "underscore": "^1.9.0"
+        "underscore": "^1.9.0",
+        "winston": "^2.4.2"
+    },
+    "devDependencies": {
+        "chai": "^4.1.2",
+        "eslint": "^4.19.1",
+        "mocha": "^5.1.1",
+        "sinon": "^5.0.7",
+        "supertest": "^3.1.0"
     }
 }

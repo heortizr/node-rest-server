@@ -1,6 +1,6 @@
 const fileUpload = require('express-fileupload');
-const Producto = require('../models/producto');
-const Usuario = require('../models/usuario');
+const Product = require('../models/product');
+const User = require('../models/user');
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
@@ -12,27 +12,26 @@ const app = express();
 // hacia req.files
 app.use(fileUpload());
 
-app.put('/:tipo/:id', (req, res) => {
+app.put('/:type/:id', (req, res) => {
 
-    let tipo = req.params.tipo;
-    let id = req.params.id;
+    let { type, id } = req.params;
 
     if (!req.files) {
         return res.status(400).json({
             ok: false,
             errs: {
-                message: 'No image'
+                message: 'No image uploaded'
             }
         });
     }
 
-    let tiposValidos = ['productos', 'usuarios'];
-    if (tiposValidos.indexOf(tipo) < 0) {
+    let validTyes = ['productos', 'usuarios'];
+    if (validTyes.indexOf(type) < 0) {
         return res.status(400).json({
             ok: false,
             errs: {
-                message: 'Tipos validos ' + tiposValidos.join(', '),
-                tipo
+                message: 'Valid types ' + validTyes.join(', '),
+                type
             }
         });
     }
@@ -41,30 +40,30 @@ app.put('/:tipo/:id', (req, res) => {
     // The name of the input field 
     // (i.e. "sampleFile") is used to 
     // retrieve the uploaded file
-    let archivo = req.files.archivo;
+    let { file } = req.files;
 
-    let splitName = archivo.split('.');
+    let splitName = file.split('.');
     let extension = splitName[splitName.length - 1];
 
     // extensiones validas
-    let extencionesValidas = ['png', 'jgp', 'gif', 'jpeg'];
+    let validExtension = ['png', 'jgp', 'gif', 'jpeg'];
 
-    if (extencionesValidas.indexOf(extension) < 0) {
+    if (validExtension.indexOf(extension) < 0) {
         return res.status(400).json({
             ok: false,
             errs: {
-                message: 'Extensiones valida ' + extencionesValidas.join(', '),
-                ext: extension
+                message: 'Valid extensiones ' + validExtension.join(', '),
+                extension
             }
         });
     }
 
     // cambiar nombre del archivo
-    let nombreArchivo = `${id}-${new Date().getUTCMilliseconds()}.${extension}`
+    let newFileName = `${id}-${new Date().getUTCMilliseconds()}.${extension}`;
 
     // Use the mv() method to place the
     // file somewhere on your server
-    archivo.mv(`uploads/${tipo}/file.jpg`, function(err) {
+    file.mv(`uploads/${type}/${newFileName}`, function(err) {
         if (err) {
             return res.status(500).json({
                 ok: false,
@@ -73,20 +72,20 @@ app.put('/:tipo/:id', (req, res) => {
         }
 
         // imagen cargada
-        switch (tipo) {
-            case 'usuarios':
-                imagenUsuario(id, res, nombreArchivo);
-                break;
-            case 'productos':
-                imagenProducto(id, res, nombreArchivo);
-                break;
+        switch (type) {
+        case 'usuarios':
+            userImage(id, res, newFileName);
+            break;
+        case 'productos':
+            productImage(id, res, newFileName);
+            break;
         }
     });
 
 });
 
-let imagenUsuario = (id, res, nombreArchivo) => {
-    Usuario.findById(id, (err, user) => {
+let userImage = (id, res, fileName) => {
+    User.findById(id, (err, data) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
@@ -94,19 +93,10 @@ let imagenUsuario = (id, res, nombreArchivo) => {
             });
         }
 
-        if (!user) {
-            return res.status(400).json({
-                ok: false,
-                errs: {
-                    message: 'Usuario no existe'
-                }
-            });
-        }
+        deleteFile('usuarios', data.img);
+        data.img = fileName;
 
-        borrarArchivo(tipo, producto.img);
-
-        user.img = nombreArchivo;
-        user.save((err, db) => {
+        data.save((err, db) => {
             res.json({
                 ok: true,
                 user: db,
@@ -116,8 +106,8 @@ let imagenUsuario = (id, res, nombreArchivo) => {
     });
 };
 
-let imagenProducto = (id, res, nombreArchivo) => {
-    Producto.findById(id, (err, producto) => {
+let productImage = (id, res, fileName) => {
+    Product.findById(id, (err, producto) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
@@ -125,29 +115,20 @@ let imagenProducto = (id, res, nombreArchivo) => {
             });
         }
 
-        if (!producto) {
-            return res.status(400).json({
-                ok: false,
-                errs: {
-                    message: 'Producto no existe'
-                }
-            });
-        }
+        deleteFile('productos', producto.img);
+        producto.img = fileName;
 
-        borrarArchivo(tipo, producto.img);
-
-        producto.img = nombreArchivo;
         producto.save((err, db) => {
             res.json({
                 ok: true,
-                producto: db,
+                product: db,
             });
         });
 
     });
 };
 
-let borrarArchivo = (tipo, archivo) => {
+let deleteFile = (tipo, archivo) => {
     let url = path.resolve(__dirname + `../../uploads/${tipo}/${archivo}`);
 
     // borrar imagen anterior

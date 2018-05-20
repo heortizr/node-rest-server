@@ -1,25 +1,24 @@
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
 const express = require('express');
+const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 
-const Usuario = require('../models/usuario');
+const User = require('../models/user');
 
 const app = express();
 const client = new OAuth2Client(process.env.CLIENT_ID);
 
-async function verify(token) {
+async function verifyTokenGoogle(token) {
+
     const ticket = await client.verifyIdToken({
         idToken: token,
         audience: process.env.CLIENT_ID,
-        // Specify the CLIENT_ID of the app that accesses the backend
-        // Or, if multiple clients access the backend:
-        //[CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3]
     });
+
     const payload = ticket.getPayload();
 
     return {
-        nombre: payload.name,
+        name: payload.name,
         email: payload.email,
         img: payload.picture,
         google: true
@@ -28,9 +27,9 @@ async function verify(token) {
 
 app.post('/', (req, res) => {
 
-    let body = req.body;
+    let { body } = req;
 
-    Usuario.findOne({ email: body.email }, (err, userDB) => {
+    User.findOne({ email: body.email }, (err, foundUser) => {
 
         if (err) {
             return res.status(500).json({
@@ -39,7 +38,7 @@ app.post('/', (req, res) => {
             });
         }
 
-        if (!userDB) {
+        if (!foundUser) {
             return res.status(400).json({
                 ok: false,
                 err: {
@@ -48,7 +47,7 @@ app.post('/', (req, res) => {
             });
         }
 
-        if (!bcrypt.compareSync(body.password, userDB.password)) {
+        if (!bcrypt.compareSync(body.password, foundUser.password)) {
             return res.status(400).json({
                 ok: false,
                 err: {
@@ -57,12 +56,14 @@ app.post('/', (req, res) => {
             });
         }
 
-        let token = jwt.sign({ payload: userDB }, 'asdf', { expiresIn: process.env.CADUCIDAD_TOKEN });
+        let token = jwt.sign({ payload: foundUser }, 'asdf', { expiresIn: process.env.CADUCIDAD_TOKEN });
 
         return res.json({
             ok: true,
-            usuario: userDB,
-            token
+            payload: {
+                user: foundUser,
+                token
+            }
         });
     });
 
@@ -70,9 +71,9 @@ app.post('/', (req, res) => {
 
 app.post('/google', async(req, res) => {
 
-    let token = req.body.token;
+    let { token } = req.body;
 
-    let googleUser = await verify(token)
+    let googleUser = await verifyTokenGoogle(token)
         .catch((err) => {
             return res.status(403).json({
                 ok: false,
@@ -80,7 +81,7 @@ app.post('/google', async(req, res) => {
             });
         });
 
-    Usuario.findOne({ email: googleUser.email }, (err, usuarioDB) => {
+    User.findOne({ email: googleUser.email }, (err, userDB) => {
 
         if (err) {
             return res.status(500).json({
@@ -89,8 +90,8 @@ app.post('/google', async(req, res) => {
             });
         }
 
-        if (usuarioDB) {
-            if (!usuarioDB.google) {
+        if (userDB) {
+            if (!userDB.google) {
                 return res.status(400).json({
                     ok: false,
                     err: { message: 'Debe utilizar autenticacion normal' }
@@ -99,12 +100,12 @@ app.post('/google', async(req, res) => {
                 let token = jwt.sign({ payload: userDB }, 'asdf', { expiresIn: process.env.CADUCIDAD_TOKEN });
                 return res.json({
                     ok: true,
-                    usuario: usuarioDB,
+                    usuario: userDB,
                     token
                 });
             }
         } else {
-            let usuario = new Usuario();
+            let usuario = new User();
 
             usuario.nombre = googleUser.nombre;
             usuario.email = googleUser.email;
@@ -126,11 +127,6 @@ app.post('/google', async(req, res) => {
                 });
             });
         }
-    });
-
-    res.json({
-        ok: true,
-        user: googleUser
     });
 });
 
