@@ -16,7 +16,7 @@ app.use(bodyParser.json());
 // middleware to make public static files
 app.use(express.static(path.resolve(__dirname, '../public')));
 
-// cargo las rutas
+// load routes
 app.use(routes);
 
 mongoose.connect(process.env.URLDB, (err) => {
@@ -25,7 +25,7 @@ mongoose.connect(process.env.URLDB, (err) => {
 });
 
 app.listen(process.env.PORT, () => {
-    logger.info(`Example app listening on port ${process.env.PORT}!`);
+    logger.info(`App listening on port ${process.env.PORT}!`);
 });
 
 module.exports = app;

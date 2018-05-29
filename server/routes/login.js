@@ -8,7 +8,7 @@ const User = require('../models/user');
 const app = express();
 const client = new OAuth2Client(process.env.CLIENT_ID);
 
-async function verifyTokenGoogle(token) {
+async function verify(token) {
 
     const ticket = await client.verifyIdToken({
         idToken: token,
@@ -73,7 +73,7 @@ app.post('/google', async(req, res) => {
 
     let { token } = req.body;
 
-    let googleUser = await verifyTokenGoogle(token)
+    let googleUser = await verify(token)
         .catch((err) => {
             return res.status(403).json({
                 ok: false,

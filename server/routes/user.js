@@ -1,5 +1,6 @@
 const bcrypt = require('bcrypt');
 const express = require('express');
+const logger = require('winston');
 const _ = require('underscore');
 
 const User = require('../models/user');
@@ -9,6 +10,8 @@ const app = express();
 
 app.get('/', [verifyToken], (req, res) => {
 
+    logger.info('Get all users');
+
     let from = Number(req.query.from || 0);
     let limit = Number(req.query.limit || 5);
 
@@ -16,6 +19,7 @@ app.get('/', [verifyToken], (req, res) => {
         .skip(from)
         .limit(limit)
         .exec((err, data) => {
+
             if (err) {
                 return res.status(400).json({
                     ok: false,
@@ -32,12 +36,23 @@ app.get('/', [verifyToken], (req, res) => {
         });
 });
 
-app.post('/', [verifyToken, verifyAdminRole], (req, res) => {
+app.post('/', (req, res) => {
+
+    logger.info('Post a new user');
+
+    if (!req.body.password) {
+        return res.status(400).json({
+            ok: false,
+            err: {
+                message: 'Field password is required'
+            }
+        });
+    }
 
     let user = new User({
         name: req.body.name,
         email: req.body.email,
-        password: bcrypt.hashSync(req.body.password, 10),
+        password: bcrypt.hashSync(req.body.password || '', 10),
         role: req.body.role
     });
 
@@ -59,11 +74,17 @@ app.post('/', [verifyToken, verifyAdminRole], (req, res) => {
 
 app.put('/:id', [verifyToken, verifyAdminRole], (req, res) => {
 
+    logger.info('Put a user');
+    
     let flieds = ['name', 'email', 'password', 'img', 'role', 'status'];
     let body = _.pick(req.body, flieds);
     let { id } = req.params;
+    
+    logger.info(id);
+    logger.info(body);
 
-    User.findByIdAndUpdate(id, body, { new: true, runValidators: true }, (err, updatedUser) => {
+    User.findById(id, (err, foundUser) => {
+
         if (err) {
             return res.status(500).json({
                 ok: false,
@@ -71,23 +92,58 @@ app.put('/:id', [verifyToken, verifyAdminRole], (req, res) => {
             });
         }
 
-        return res.json({
-            ok: true,
-            payload: updatedUser
+        if (!foundUser) {
+            return res.status(404).json({
+                ok: false,
+                err: {
+                    message: 'User does not exists'
+                }
+            });
+        }
+
+        foundUser.name = body.name;
+        foundUser.email = body.email;
+        foundUser.img = body.img;
+        foundUser.role = body.role;
+        foundUser.status = body.status;
+
+        foundUser.save((err, savedUser) => {
+
+            if (err) {
+                return res.status(500).json({
+                    ok: false,
+                    err
+                });
+            }
+
+            return res.json({
+                ok: true,
+                payload: savedUser
+            });
         });
     });
+
 });
 
 app.delete('/:id', [verifyToken, verifyAdminRole], (req, res) => {
 
+    logger.info('Delete a user');
+
     let { id } = req.params;
-    let body = { estado: false };
+    let body = { status: false };
 
     User.findByIdAndUpdate(id, body, { new: true }, (err, deletedUser) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
                 err
+            });
+        }
+
+        if (!deletedUser) {
+            return res.status(404).json({
+                ok: false,
+                err: { err: 'User not found' }
             });
         }
 
