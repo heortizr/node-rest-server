@@ -52,6 +52,41 @@ describe('Users', () => {
                 });
         });
     });
+    describe(`${basePath}/:id GET`, () => {
+        it('it does not get user, because does not exists', (done) => {
+            request(server)
+                .get(`${basePath}/123456123456`)
+                .expect('Content-Type', /json/)
+                .expect(404)
+                .end((err, res) => {
+                    if (err) throw err;
+                    expect(res.body).be.a('Object');
+                    expect(res.body.err).be.a('Object');
+                    done();
+                });
+        });
+        it('it expect get a single user', (done) => {
+            let data = new Model({
+                name: 'User Name',
+                email: 'test1@test.com',
+                password: '123456'
+            });
+            data.save((err, savedUser) => {
+                request(server)
+                    .get(`${basePath}/${savedUser._id}`)
+                    .expect('Content-Type', /json/)
+                    .expect(200)
+                    .end((err, res) => {
+                        if (err) throw err;
+                        expect(res.body).be.a('Object');
+                        expect(res.body.payload).be.a('Object');
+                        expect(res.body.payload).has.property('_id');
+                        expect(res.body.payload._id).eql(`${savedUser._id}`);
+                        done();
+                    });
+            });
+        });
+    });
     describe(`${basePath} POST`, () => {
         it('it does not expect new user', (done) => {
             request(server)
@@ -87,7 +122,7 @@ describe('Users', () => {
                 });
         });
     });
-    describe(`${basePath} PUT`, () => {
+    describe(`${basePath}/:id PUT`, () => {
         it('it does not update user, because does not exists', (done) => {
             request(server)
                 .put(`${basePath}/123456123456`)
@@ -126,7 +161,7 @@ describe('Users', () => {
             });
         });
     });
-    describe(`${basePath} DELETE`, () => {
+    describe(`${basePath}/:id DELETE`, () => {
         it('it does not delete user, because does not exists', (done) => {
             request(server)
                 .delete(`${basePath}/123456123456`)

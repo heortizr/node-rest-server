@@ -1,4 +1,5 @@
 const express = require('express');
+const logger = require('winston');
 
 const Category = require('../models/category');
 const { verifyToken, verifyAdminRole } = require('../middlewares/auth');
@@ -6,6 +7,8 @@ const { verifyToken, verifyAdminRole } = require('../middlewares/auth');
 const app = express();
 
 app.get('/', verifyToken, (req, res) => {
+
+    logger.info('Get all categories');
 
     Category.find({})
         .sort('description')
@@ -29,6 +32,7 @@ app.get('/', verifyToken, (req, res) => {
 
 app.get('/:id', verifyToken, (req, res) => {
 
+    logger.info('Get a category by given ID');
     let { id } = req.params;
 
     Category.findById(id)
@@ -38,6 +42,13 @@ app.get('/:id', verifyToken, (req, res) => {
                 return res.status(500).json({
                     ok: false,
                     err
+                });
+            }
+
+            if (!category) {
+                return res.status(404).json({
+                    ok: false,
+                    err: { err: 'Does not exists category with that ID' }
                 });
             }
 
@@ -52,14 +63,22 @@ app.get('/:id', verifyToken, (req, res) => {
 
 app.post('/', [verifyToken], (req, res) => {
 
-    let { body } = req;
+    logger.info('Post a new category');
+
+    if (!req.body.description) {
+        return res.status(400).json({
+            ok: false,
+            err: { err: 'Description is riquiered' }
+        });
+    }
 
     let category = new Category({
-        description: body.description,
+        description: req.body.description,
         user: req.user._id
     });
 
     category.save((err, savedCategory) => {
+
         if (err) {
             return res.status(500).json({
                 ok: false,
@@ -80,17 +99,31 @@ app.put('/:id', verifyToken, verifyAdminRole, (req, res) => {
     let body = { description: req.body.description };
     let { id } = req.params;
 
-    Category.findByIdAndUpdate(id, body, { new: true, runValidators: true }, (err, updatedCategory) => {
+    Category.findById(id).exec((err, foundCategory) => {
         if (err) {
-            return res.status(400).json({
+            return res.status(500).json({
                 ok: false,
                 err
             });
         }
-
-        return res.json({
-            ok: true,
-            payload: updatedCategory
+        if (!foundCategory) {
+            return res.status(404).json({
+                ok: false,
+                err: { err: 'Category not found with that ID' }
+            });
+        }
+        foundCategory.description = body.description;
+        foundCategory.save((err, savedCat) => {
+            if (err) {
+                return res.status(500).json({
+                    ok: false,
+                    err
+                });
+            }
+            return res.json({
+                ok: true,
+                payload: savedCat
+            });
         });
     });
 });
@@ -101,9 +134,16 @@ app.delete('/:id', verifyToken, verifyAdminRole, (req, res) => {
 
     Category.findOneAndRemove(id, (err, deletedCategory) => {
         if (err) {
-            return res.status(400).json({
+            return res.status(500).json({
                 ok: false,
                 err
+            });
+        }
+
+        if (!deletedCategory) {
+            return res.status(404).json({
+                ok: false,
+                err: { err: 'Category not found with that ID' }
             });
         }
 

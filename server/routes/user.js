@@ -36,6 +36,33 @@ app.get('/', [verifyToken], (req, res) => {
         });
 });
 
+app.get('/:id', [verifyToken], (req, res) => {
+
+    logger.info('Get a single user');
+    let { id } = req.params;
+    
+    User.findById(id, (err, foundUser) => {
+        if (err) {
+            return res.status(500).json({
+                ok: false,
+                err
+            });
+        }
+        if (!foundUser) {
+            return res.status(404).json({
+                ok: false,
+                err: {
+                    message: 'User does not exists'
+                }
+            });
+        }
+        return res.json({
+            ok: true,
+            payload: foundUser
+        });
+    });
+});
+
 app.post('/', (req, res) => {
 
     logger.info('Post a new user');
@@ -80,9 +107,6 @@ app.put('/:id', [verifyToken, verifyAdminRole], (req, res) => {
     let body = _.pick(req.body, flieds);
     let { id } = req.params;
     
-    logger.info(id);
-    logger.info(body);
-
     User.findById(id, (err, foundUser) => {
 
         if (err) {

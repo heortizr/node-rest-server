@@ -5,10 +5,11 @@
     "main": "index.js",
     "scripts": {
         "dev": "nodemon server/server",
+        "prestart": "npm install",
         "start": "node server/server",
-        "test": "./node_modules/.bin/mocha --timeout 10000",
         "lint": "./node_modules/.bin/eslint .",
-        "pretest": "npm run lint"
+        "pretest": "npm run lint",
+        "test": "./node_modules/.bin/mocha --timeout 10000"
     },
     "keywords": [],
     "author": "",

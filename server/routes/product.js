@@ -1,4 +1,5 @@
 const express = require('express');
+const logger = require('winston');
 
 const Product = require('../models/product');
 const { verifyToken } = require('../middlewares/auth');
@@ -6,6 +7,8 @@ const { verifyToken } = require('../middlewares/auth');
 const app = express();
 
 app.get('/', [verifyToken], (req, res) => {
+
+    logger.info('Get all product');
 
     let from = Number(req.query.from || 0);
     let limit = Number(req.query.limit || 5);
@@ -17,19 +20,16 @@ app.get('/', [verifyToken], (req, res) => {
         .populate('user', 'name email')
         .populate('Category')
         .exec((err, products) => {
-
             if (err) {
                 return res.status(500).json({
                     ok: false,
                     err
                 });
             }
-
             return res.json({
                 ok: true,
                 payload: products
             });
-
         });
 });
 
@@ -46,6 +46,13 @@ app.get('/:id', [verifyToken], (req, res) => {
                 return res.status(500).json({
                     ok: false,
                     err
+                });
+            }
+
+            if (!product) {
+                return res.status(404).json({
+                    ok: false,
+                    err: { err: 'Product not found with that ID' }
                 });
             }
 
@@ -85,12 +92,18 @@ app.get('/buscar/:search', [verifyToken], (req, res) => {
 
 app.post('/', [verifyToken], (req, res) => {
 
-    let product = new Product({
-        name: req.body.name,
-        unitPrice: req.body.unitPrice,
-        category: req.body.category,
-        user: req.body.user._id
-    });
+    logger.info('Post a new product');
+
+    let product = new Product(req.body);
+    product.user = req.user._id;
+
+    let err = product.validateSync();
+    if (err) {
+        return res.status(400).json({
+            ok: false,
+            err
+        });
+    }
 
     product.save((err, savedProduct) => {
         if (err) {
@@ -99,7 +112,6 @@ app.post('/', [verifyToken], (req, res) => {
                 err
             });
         }
-
         return res.json({
             ok: true,
             payload: savedProduct
