@@ -5,6 +5,11 @@ const Product = require('../models/product');
 const { verifyToken } = require('../middlewares/auth');
 
 const app = express();
+const opts = {
+    new: true,
+    runValidators: true,
+    context: 'query' 
+};
 
 app.get('/', [verifyToken], (req, res) => {
 
@@ -19,7 +24,7 @@ app.get('/', [verifyToken], (req, res) => {
         .sort('name')
         .populate('user', 'name email')
         .populate('Category')
-        .exec((err, products) => {
+        .exec((err, data) => {
             if (err) {
                 return res.status(500).json({
                     ok: false,
@@ -28,7 +33,7 @@ app.get('/', [verifyToken], (req, res) => {
             }
             return res.json({
                 ok: true,
-                payload: products
+                payload: data
             });
         });
 });
@@ -40,14 +45,14 @@ app.get('/:id', [verifyToken], (req, res) => {
     Product.findById(req.params.id)
         .populate('user', 'name email')
         .populate('category')
-        .exec((err, product) => {
+        .exec((err, foundData) => {
             if (err) {
                 return res.status(500).json({
                     ok: false,
                     err
                 });
             }
-            if (!product) {
+            if (!foundData) {
                 return res.status(404).json({
                     ok: false,
                     err: { message: 'Product not found with that ID' }
@@ -55,7 +60,7 @@ app.get('/:id', [verifyToken], (req, res) => {
             }
             return res.json({
                 ok: true,
-                payload: product
+                payload: foundData
             });
         });
 });
@@ -68,14 +73,14 @@ app.get('/buscar/:search', [verifyToken], (req, res) => {
     Product.find({ name: regex })
         .populate('user', 'name email')
         .populate('category')
-        .exec((err, product) => {
+        .exec((err, data) => {
             if (err) {
                 return res.status(500).json({
                     ok: false,
                     err
                 });
             }
-            if (!product) {
+            if (!data) {
                 return res.status(404).json({
                     ok: false,
                     err: { message: 'Product not found' }
@@ -83,7 +88,7 @@ app.get('/buscar/:search', [verifyToken], (req, res) => {
             }
             return res.json({
                 ok: true,
-                product
+                data
             });
         });
 });
@@ -102,7 +107,7 @@ app.post('/', [verifyToken], (req, res) => {
         });
     }
 
-    product.save((err, savedProduct) => {
+    product.save((err, savedData) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
@@ -111,7 +116,7 @@ app.post('/', [verifyToken], (req, res) => {
         }
         return res.status(201).json({
             ok: true,
-            payload: savedProduct
+            payload: savedData
         });
     });
 
@@ -120,24 +125,15 @@ app.post('/', [verifyToken], (req, res) => {
 app.put('/:id', [verifyToken], (req, res) => {
 
     let { id } = req.params;
-    let data = new Product(req.body);
 
-    let err = data.validateSync();
-    if (err) {
-        return res.status(400).json({
-            ok: false,
-            err
-        });
-    }
-
-    Product.findByIdAndUpdate(id, req.body, { new: true }, (err, updatedProduct) => {
+    Product.findByIdAndUpdate(id, req.body, opts, (err, updatedData) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
                 err
             });
         }
-        if (!updatedProduct) {
+        if (!updatedData) {
             return res.status(404).json({
                 ok: false,
                 err: { message: 'Producto not found with that ID' }
@@ -145,21 +141,21 @@ app.put('/:id', [verifyToken], (req, res) => {
         }
         return res.json({
             ok: true,
-            payload: updatedProduct
+            payload: updatedData
         });
     });
 });
 
 app.delete('/:id', [verifyToken], (req, res) => {
 
-    Product.findOneAndRemove(req.params.id, (err, deletedProduct) => {
+    Product.findOneAndRemove(req.params.id, (err, deletedData) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
                 err
             });
         }
-        if (!deletedProduct) {
+        if (!deletedData) {
             return res.status(404).json({
                 ok: false,
                 err: { message: 'Producto not found with that ID' }
@@ -167,7 +163,7 @@ app.delete('/:id', [verifyToken], (req, res) => {
         }
         return res.json({
             ok: true,
-            payload: deletedProduct
+            payload: deletedData
         });
     });
 });

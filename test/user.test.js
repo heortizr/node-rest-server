@@ -144,10 +144,9 @@ describe('Users', () => {
             });
 
             data.save((err, data) => {
-                data.email = 'asdf@gmail.com';
                 request(server)
                     .put(`${basePath}/${data._id}`)
-                    .send(data)
+                    .send({email: 'otro@test.com'})
                     .expect('Content-Type', /json/)
                     .expect(200)
                     .end((err, res) => {
@@ -155,7 +154,7 @@ describe('Users', () => {
                         expect(res.body).be.a('Object');
                         expect(res.body.payload).be.a('Object');
                         expect(res.body.payload).has.property('_id');
-                        expect(res.body.payload.email).eql('asdf@gmail.com');
+                        expect(res.body.payload.email).eql('otro@test.com');
                         done();
                     });
             });

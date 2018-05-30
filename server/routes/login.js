@@ -8,7 +8,7 @@ const User = require('../models/user');
 const app = express();
 const client = new OAuth2Client(process.env.CLIENT_ID);
 
-async function verify(token) {
+let verify = async (token) => {
 
     const ticket = await client.verifyIdToken({
         idToken: token,
@@ -23,22 +23,24 @@ async function verify(token) {
         img: payload.picture,
         google: true
     };
-}
+};
+
+let createToken = (payload) => {
+    return jwt.sign({ payload }, 'asdf', { expiresIn: process.env.CADUCIDAD_TOKEN });
+};
 
 app.post('/', (req, res) => {
 
-    let { body } = req;
+    let { email, password } = req.body;
 
-    User.findOne({ email: body.email }, (err, foundUser) => {
-
+    User.findOne({ email }, (err, foundData) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
                 err
             });
         }
-
-        if (!foundUser) {
+        if (!foundData || !bcrypt.compareSync(password, foundData.password)) {
             return res.status(400).json({
                 ok: false,
                 err: {
@@ -46,23 +48,12 @@ app.post('/', (req, res) => {
                 }
             });
         }
-
-        if (!bcrypt.compareSync(body.password, foundUser.password)) {
-            return res.status(400).json({
-                ok: false,
-                err: {
-                    message: 'Usuario o clave invalido'
-                }
-            });
-        }
-
-        let token = jwt.sign({ payload: foundUser }, 'asdf', { expiresIn: process.env.CADUCIDAD_TOKEN });
 
         return res.json({
             ok: true,
             payload: {
-                user: foundUser,
-                token
+                user: foundData,
+                token: createToken(foundData)
             }
         });
     });
@@ -81,39 +72,31 @@ app.post('/google', async(req, res) => {
             });
         });
 
-    User.findOne({ email: googleUser.email }, (err, userDB) => {
-
+    User.findOne({ email: googleUser.email }, (err, foundData) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
                 err
             });
         }
-
-        if (userDB) {
-            if (!userDB.google) {
+        if (foundData) {
+            if (!foundData.google) {
                 return res.status(400).json({
                     ok: false,
-                    err: { message: 'Debe utilizar autenticacion normal' }
+                    err: { message: 'Login with user and password' }
                 });
             } else {
-                let token = jwt.sign({ payload: userDB }, 'asdf', { expiresIn: process.env.CADUCIDAD_TOKEN });
                 return res.json({
                     ok: true,
-                    usuario: userDB,
-                    token
+                    usuario: foundData,
+                    token: createToken(foundData)
                 });
             }
         } else {
-            let usuario = new User();
+            let user = new User(googleUser);
+            user.password = '*****';
 
-            usuario.nombre = googleUser.nombre;
-            usuario.email = googleUser.email;
-            usuario.img = googleUser.img;
-            usuario.password = '*****';
-            usuario.google = true;
-
-            usuario.save((err, usuarioDB) => {
+            user.save((err, savedData) => {
                 if (err) {
                     return res.status(500).json({
                         ok: false,
@@ -122,8 +105,8 @@ app.post('/google', async(req, res) => {
                 }
                 return res.json({
                     ok: true,
-                    usuario: usuarioDB,
-                    token
+                    usuario: savedData,
+                    token: createToken(foundData)
                 });
             });
         }

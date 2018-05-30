@@ -1,12 +1,16 @@
 const bcrypt = require('bcrypt');
 const express = require('express');
 const logger = require('winston');
-const _ = require('underscore');
 
 const User = require('../models/user');
 const { verifyToken, verifyAdminRole } = require('../middlewares/auth');
 
 const app = express();
+const opts = {
+    new: true,
+    runValidators: true,
+    context: 'query' 
+};
 
 app.get('/', [verifyToken], (req, res) => {
 
@@ -19,14 +23,12 @@ app.get('/', [verifyToken], (req, res) => {
         .skip(offset)
         .limit(limit)
         .exec((err, data) => {
-
             if (err) {
                 return res.status(400).json({
                     ok: false,
                     err
                 });
             }
-
             User.count({ estado: true }, (err, total) => {
                 return res.json({
                     ok: true,
@@ -39,16 +41,15 @@ app.get('/', [verifyToken], (req, res) => {
 app.get('/:id', [verifyToken], (req, res) => {
 
     logger.info('Get a single user');
-    let { id } = req.params;
     
-    User.findById(id, (err, foundUser) => {
+    User.findById(req.params.id, (err, foundData) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
                 err
             });
         }
-        if (!foundUser) {
+        if (!foundData) {
             return res.status(404).json({
                 ok: false,
                 err: {
@@ -58,7 +59,7 @@ app.get('/:id', [verifyToken], (req, res) => {
         }
         return res.json({
             ok: true,
-            payload: foundUser
+            payload: foundData
         });
     });
 });
@@ -66,24 +67,18 @@ app.get('/:id', [verifyToken], (req, res) => {
 app.post('/', (req, res) => {
 
     logger.info('Post a new user');
+    let user = new User(req.body);
+    let err = user.validateSync();
 
-    if (!req.body.password) {
+    if (err) {
         return res.status(400).json({
             ok: false,
-            err: {
-                message: 'Field password is required'
-            }
+            err
         });
     }
 
-    let user = new User({
-        name: req.body.name,
-        email: req.body.email,
-        password: bcrypt.hashSync(req.body.password || '', 10),
-        role: req.body.role
-    });
-
-    user.save((err, savedUser) => {
+    user.password = bcrypt.hashSync(req.body.password, 10);
+    user.save((err, savedData) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
@@ -93,7 +88,7 @@ app.post('/', (req, res) => {
 
         return res.json({
             ok: true,
-            payload: savedUser
+            payload: savedData
         });
     });
 
@@ -101,22 +96,15 @@ app.post('/', (req, res) => {
 
 app.put('/:id', [verifyToken, verifyAdminRole], (req, res) => {
 
-    logger.info('Put a user');
-    
-    let flieds = ['name', 'email', 'password', 'img', 'role', 'status'];
-    let body = _.pick(req.body, flieds);
-    let { id } = req.params;
-    
-    User.findById(id, (err, foundUser) => {
-
+    logger.info('Put a user');    
+    User.findByIdAndUpdate(req.params.id, {$set: req.body}, opts, (err, updatedData) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
                 err
             });
         }
-
-        if (!foundUser) {
+        if (!updatedData) {
             return res.status(404).json({
                 ok: false,
                 err: {
@@ -124,56 +112,33 @@ app.put('/:id', [verifyToken, verifyAdminRole], (req, res) => {
                 }
             });
         }
-
-        foundUser.name = body.name;
-        foundUser.email = body.email;
-        foundUser.img = body.img;
-        foundUser.role = body.role;
-        foundUser.status = body.status;
-
-        foundUser.save((err, savedUser) => {
-
-            if (err) {
-                return res.status(500).json({
-                    ok: false,
-                    err
-                });
-            }
-
-            return res.json({
-                ok: true,
-                payload: savedUser
-            });
+        return res.json({
+            ok: true,
+            payload: updatedData
         });
     });
-
 });
 
 app.delete('/:id', [verifyToken, verifyAdminRole], (req, res) => {
 
-    logger.info('Delete a user');
+    logger.info('Delete a user (update status field)');
 
-    let { id } = req.params;
-    let body = { status: false };
-
-    User.findByIdAndUpdate(id, body, { new: true }, (err, deletedUser) => {
+    User.findByIdAndUpdate(req.params.id, {status: false}, opts, (err, updatedData) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
                 err
             });
         }
-
-        if (!deletedUser) {
+        if (!updatedData) {
             return res.status(404).json({
                 ok: false,
                 err: { message: 'User not found' }
             });
         }
-
         return res.json({
             ok: true,
-            payload: deletedUser
+            payload: updatedData
         });
     });
 });

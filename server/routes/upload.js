@@ -15,6 +15,7 @@ app.use(fileUpload());
 app.put('/:type/:id', (req, res) => {
 
     let { type, id } = req.params;
+    let validTyes = ['productos', 'usuarios'];
 
     if (!req.files) {
         return res.status(400).json({
@@ -25,7 +26,6 @@ app.put('/:type/:id', (req, res) => {
         });
     }
 
-    let validTyes = ['productos', 'usuarios'];
     if (validTyes.indexOf(type) < 0) {
         return res.status(400).json({
             ok: false,
@@ -85,7 +85,7 @@ app.put('/:type/:id', (req, res) => {
 });
 
 let userImage = (id, res, fileName) => {
-    User.findById(id, (err, data) => {
+    User.findById(id, (err, foundData) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
@@ -93,21 +93,20 @@ let userImage = (id, res, fileName) => {
             });
         }
 
-        deleteFile('usuarios', data.img);
-        data.img = fileName;
+        deleteFile('usuarios', foundData.img);
+        foundData.img = fileName;
 
-        data.save((err, db) => {
+        foundData.save((err, savedData) => {
             res.json({
                 ok: true,
-                user: db,
+                user: savedData,
             });
         });
-
     });
 };
 
 let productImage = (id, res, fileName) => {
-    Product.findById(id, (err, producto) => {
+    Product.findById(id, (err, foundData) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
@@ -115,16 +114,15 @@ let productImage = (id, res, fileName) => {
             });
         }
 
-        deleteFile('productos', producto.img);
-        producto.img = fileName;
+        deleteFile('productos', foundData.img);
+        foundData.img = fileName;
 
-        producto.save((err, db) => {
+        foundData.save((err, savedData) => {
             res.json({
                 ok: true,
-                product: db,
+                product: savedData,
             });
         });
-
     });
 };
 
