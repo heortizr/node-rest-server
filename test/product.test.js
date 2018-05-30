@@ -38,7 +38,7 @@ describe('Products', () => {
         done();
     });
 
-    xdescribe(`${basePath} GET`, () => {
+    describe(`${basePath} GET`, () => {
         it('it expect get a empty array', (done) => {
             request(server)
                 .get(`${basePath}`)
@@ -52,7 +52,7 @@ describe('Products', () => {
                 });
         });
     });
-    xdescribe(`${basePath}/:id GET`, () => {
+    describe(`${basePath}/:id GET`, () => {
         it('it does not get product, because does not exists', (done) => {
             request(server)
                 .get(`${basePath}/123456123456`)
@@ -101,7 +101,7 @@ describe('Products', () => {
                     done();
                 });
         });
-        xit('it expect new product', (done) => {
+        it('it expect new product', (done) => {
 
             let data = {
                 name: 'product name',
@@ -113,7 +113,7 @@ describe('Products', () => {
                 .post(`${basePath}`)
                 .send(data)
                 .expect('Content-Type', /json/)
-                .expect(200)
+                .expect(201)
                 .end((err, res) => {
                     if (err) throw err;
                     expect(res.body).be.a('Object');
@@ -123,12 +123,30 @@ describe('Products', () => {
                 });
         });
     });
-    xdescribe(`${basePath}/:id PUT`, () => {
+    describe(`${basePath}/:id PUT`, () => {
         it('it does not update product, because does not exists', (done) => {
+            let data = {
+                name: 'product name',
+                unitPrice: '5',
+                category: '012345678901234567890123'
+            };
+            request(server)
+                .put(`${basePath}/123456123456`)
+                .send(data)
+                .expect('Content-Type', /json/)
+                .expect(404)
+                .end((err, res) => {
+                    if (err) throw err;
+                    expect(res.body).be.a('Object');
+                    expect(res.body.err).be.a('Object');
+                    done();
+                });
+        });
+        it('it does not update product, because no data send', (done) => {
             request(server)
                 .put(`${basePath}/123456123456`)
                 .expect('Content-Type', /json/)
-                .expect(404)
+                .expect(400)
                 .end((err, res) => {
                     if (err) throw err;
                     expect(res.body).be.a('Object');
@@ -162,7 +180,7 @@ describe('Products', () => {
             });
         });
     });
-    xdescribe(`${basePath}/:id DELETE`, () => {
+    describe(`${basePath}/:id DELETE`, () => {
         it('it does not delete product, because does not exists', (done) => {
             request(server)
                 .delete(`${basePath}/123456123456`)
@@ -178,7 +196,9 @@ describe('Products', () => {
         it('it expect delete product', (done) => {
 
             let data = new Model({
-                description: 'New Desc'
+                name: 'product name',
+                unitPrice: '5',
+                category: '012345678901234567890123'
             });
 
             data.save((err, data) => {

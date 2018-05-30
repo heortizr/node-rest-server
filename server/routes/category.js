@@ -48,7 +48,7 @@ app.get('/:id', verifyToken, (req, res) => {
             if (!category) {
                 return res.status(404).json({
                     ok: false,
-                    err: { err: 'Does not exists category with that ID' }
+                    err: { message: 'Does not exists category with that ID' }
                 });
             }
 
@@ -65,17 +65,18 @@ app.post('/', [verifyToken], (req, res) => {
 
     logger.info('Post a new category');
 
-    if (!req.body.description) {
-        return res.status(400).json({
-            ok: false,
-            err: { err: 'Description is riquiered' }
-        });
-    }
-
     let category = new Category({
         description: req.body.description,
         user: req.user._id
     });
+
+    let err = category.validateSync();
+    if (err) {
+        return res.status(400).json({
+            ok: false,
+            err
+        });
+    }
 
     category.save((err, savedCategory) => {
 
@@ -109,7 +110,7 @@ app.put('/:id', verifyToken, verifyAdminRole, (req, res) => {
         if (!foundCategory) {
             return res.status(404).json({
                 ok: false,
-                err: { err: 'Category not found with that ID' }
+                err: { message: 'Category not found with that ID' }
             });
         }
         foundCategory.description = body.description;
@@ -143,7 +144,7 @@ app.delete('/:id', verifyToken, verifyAdminRole, (req, res) => {
         if (!deletedCategory) {
             return res.status(404).json({
                 ok: false,
-                err: { err: 'Category not found with that ID' }
+                err: { message: 'Category not found with that ID' }
             });
         }
 

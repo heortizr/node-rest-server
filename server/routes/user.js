@@ -12,11 +12,11 @@ app.get('/', [verifyToken], (req, res) => {
 
     logger.info('Get all users');
 
-    let from = Number(req.query.from || 0);
+    let offset = Number(req.query.offset || 0);
     let limit = Number(req.query.limit || 5);
 
     User.find({ estado: true }, 'name email img status role google')
-        .skip(from)
+        .skip(offset)
         .limit(limit)
         .exec((err, data) => {
 
@@ -167,7 +167,7 @@ app.delete('/:id', [verifyToken, verifyAdminRole], (req, res) => {
         if (!deletedUser) {
             return res.status(404).json({
                 ok: false,
-                err: { err: 'User not found' }
+                err: { message: 'User not found' }
             });
         }
 
